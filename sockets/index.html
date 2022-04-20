@@ -1,0 +1,130 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Socket.io - express</title>
+</head>
+<body>
+  
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+  <script src="node_modules/socket.io/dist/socket.js"></script>
+</body>
+</html> -->
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Socket.IO chat</title>
+    <style>
+      body { margin: 0; padding-bottom: 3rem; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+
+      #form { background: rgba(0, 0, 0, 0.15); padding: 0.25rem; position: fixed; bottom: 0; left: 0; right: 0; display: flex; height: 3rem; box-sizing: border-box; backdrop-filter: blur(10px); }
+      #input { border: none; padding: 0 1rem; flex-grow: 1; border-radius: 2rem; margin: 0.25rem; }
+      #input:focus { outline: none; }
+      #form > button { background: #333; border: none; padding: 0 1rem; margin: 0.25rem; border-radius: 3px; outline: none; color: #fff; }
+
+      #messages { list-style-type: none; margin: 0; padding: 0; }
+      #users { list-style-type:disclosure-closed; margin: 0; }
+      #messages > li, #users > li { padding: 0.5rem 1rem; }
+      #messages > li:nth-child(odd) { background: #efefef; }
+
+      #container-user { width: 24%; display: table; float: left; margin: 2px; background-color: beige;}
+      #container-msj { width: 75%; display: table;}
+    </style>
+  </head>
+  <body>
+    <div>
+      <input type="text" name="user" id="user">
+      <input type="text" name="email" id="email">
+      <button type="button" id="loginBtn" onclick="login()">Log in</button>
+    </div>
+    <div id="container-user"><ul id="users"></ul></div>
+    <div id="container-msj"><ul id="messages"></ul></div>
+    <form id="form" action="">
+      <input id="input" autocomplete="off" /><select name="sendTo" id="sendTo"></select><button>Send</button>
+    </form>
+    
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      var socket = io();
+
+      var messages = document.getElementById('messages');
+      var form = document.getElementById('form');
+      var input = document.getElementById('input');
+      var users = document.getElementById('users');
+
+      var userName = document.getElementById('user');
+      var email    = document.getElementById('email');
+      var loginBtn = document.getElementById('loginBtn');
+      var sendTo   = document.getElementById('sendTo');
+
+var opt = document.createElement('option');
+opt.value = '';
+opt.innerHTML = 'ALL';
+sendTo.appendChild(opt);
+
+      form.addEventListener('submit', function(e) 
+      {
+        e.preventDefault();
+        if (input.value) {
+          if(sendTo.value != ''){
+            socket.emit('chat_msj', userName.value, input.value, sendTo.value);
+          }
+          else{
+            socket.emit('chat_msj', userName.value, input.value);
+          }
+          input.value = '';
+        }
+      });
+
+      socket.on('chat_msj', function(userName, msg, private) 
+      {
+        var item = document.createElement('li');
+        if(private){
+          item.innerHTML = '<strong style=color:red;>' + userName + '</strong>: ' +msg;
+        } else {
+          item.innerHTML = '<strong>' + userName + '</strong>: ' +msg;
+        }
+        messages.appendChild(item);
+        window.scrollTo(0, document.body.scrollHeight);
+      });
+
+      socket.on('login', function(listUsers) 
+      {
+        users.innerHTML = "";
+        sendTo.innerHTML = "";
+
+        var opt = document.createElement('option');
+        opt.value = '';
+        opt.innerHTML = 'ALL';
+        sendTo.appendChild(opt);
+
+        listUsers.forEach(element => {
+          var item = document.createElement('li');
+          item.textContent = element.user;
+          users.appendChild(item);
+
+          opt = document.createElement('option');
+          opt.value = element.id;
+          opt.innerHTML = element.user;
+          sendTo.appendChild(opt);
+
+        });
+        window.scrollTo(0, document.body.scrollHeight);
+
+        userName.disabled = true;
+        email.disabled    = true;
+        loginBtn.style.display = "none";
+      });
+
+      function login()
+      {
+        socket.emit('login', { user: userName.value, email: email.value });
+      }
+
+    </script>
+  </body>
+</html>
